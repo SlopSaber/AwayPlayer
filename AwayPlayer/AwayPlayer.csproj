@@ -42,7 +42,6 @@
     <DisableZipRelease>True</DisableZipRelease>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
     <PackageReference Include="Community.CsharpSqlite.SQLiteClient">
       <Version>3.7.7.3</Version>
     </PackageReference>
@@ -84,6 +83,18 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\DataModels.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="com.rlabrecque.steamworks.net">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\com.rlabrecque.steamworks.net.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Community.CsharpSqlite.SQLiteClient">
+      <HintPath>$(NuGetPackageRoot)community.csharpsqlite.sqliteclient\3.7.7.3\lib\net45\Community.CsharpSqlite.SQLiteClient.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Community.CsharpSqlite">
+      <HintPath>$(NuGetPackageRoot)community.csharpsqlite.sqliteclient\3.7.7.3\lib\net45\Community.CsharpSqlite.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Main" Publicize="true">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Main.dll</HintPath>
@@ -137,6 +148,10 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.IO.Compression">
+      <HintPath>$(BeatSaberDir)\Libs\System.IO.Compression.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -221,6 +236,7 @@
     <Compile Include="UI\APSettingsMainViewController.cs" />
     <Compile Include="UI\MenuButtonManager.cs" />
     <Compile Include="Utils\ArgParser.cs" />
+    <Compile Include="Utils\PlatformUserId.cs" />
     <Compile Include="Utils\UnityMainThreadScheduler.cs" />
     <Compile Include="Utils\WindowUtils.cs" />
   </ItemGroup>

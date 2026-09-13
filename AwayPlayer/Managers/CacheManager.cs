@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Zenject;
+using AwayPlayer.Utils;
 
 #pragma warning disable CS0649 // Value is never assigned to, Zenject will inject
 namespace AwayPlayer.Managers
@@ -16,7 +17,6 @@ namespace AwayPlayer.Managers
     {
         [Inject] private readonly DatabaseManager DBMgr;
         [Inject] private readonly SiraLog Log;
-        [Inject] private readonly IPlatformUserModel _platformUserModel;
 
         private string _tableName;
 
@@ -26,8 +26,7 @@ namespace AwayPlayer.Managers
 
             Task.Run(async () =>
             {
-                var userInfo = await _platformUserModel.GetUserInfo(CancellationToken.None);
-                var userId = userInfo.platformUserId;
+                var userId = PlatformUserId.Get();
                 _tableName = $"{typeof(T).Name}Cache_{userId}";
 
                 // Create the table if it doesn't exist

@@ -5,12 +5,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Zenject;
+using AwayPlayer.Utils;
 
 namespace AwayPlayer.Managers
 {
     public class WhitelistBlacklistManager : IInitializable
     {
-        private readonly IPlatformUserModel _platformUserModel;
         private readonly DatabaseManager DBMgr;
         private string BlacklistTableName;
         private string WhitelistTableName;
@@ -18,11 +18,10 @@ namespace AwayPlayer.Managers
         public List<string> Blacklist { get; private set; }
         public List<string> Whitelist { get; private set; }
 
-        public WhitelistBlacklistManager(SiraLog log, DatabaseManager dbmgr, IPlatformUserModel platformUserModel)
+        public WhitelistBlacklistManager(SiraLog log, DatabaseManager dbmgr)
         {
             Log = log;
             DBMgr = dbmgr;
-            _platformUserModel = platformUserModel;
         }
 
         public void Initialize()
@@ -30,8 +29,7 @@ namespace AwayPlayer.Managers
             Log.Debug($"Initializing the WhitelistBlacklistManager...");
             Task.Run(async () =>
             {
-                var userInfo = await _platformUserModel.GetUserInfo(CancellationToken.None);
-                var userId = userInfo.platformUserId;
+                var userId = PlatformUserId.Get();
                 BlacklistTableName = $"Blacklist_{userId}";
                 WhitelistTableName = $"Whitelist_{userId}";
 

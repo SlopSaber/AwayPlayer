@@ -29,7 +29,6 @@ namespace AwayPlayer
         private readonly Random rnd = new Random();
         internal protected APMenuFloatingScreen FloatingScreen;
         private bool _enabled = false;
-        private Player Player;
         private bool HasScreen = true;
         private bool HasDelay = true;
         private int Delay = 10;
@@ -146,31 +145,20 @@ namespace AwayPlayer
         public async Task PrepareReplayAsync()
         {
             if (IsLoaded) return;
-            if (ReplayerCache.TryReadReplay((int)CurrentScore.Id, out Replay replay))
+            if (!ReplayDecoder.TryDecodeReplay(await API.GetReplayDataAsync(CurrentScore.Replay), out Replay replay))
             {
-                Log.Notice("Cache hit! Succesfully not bothered the API");
-                if (!await ReplayerMenuLoader.Instance.CanLaunchReplay(replay.info))
-                {
-                    Log.Warn($"Failed to load replay for {CurrentScore.Song.Name}");
-                    SelectRandomReplay();
-                    await PrepareReplayAsync();
-                    return;
-                }
+                Log.Warn($"Failed to decode replay for {CurrentScore.Song.Name}");
+                SelectRandomReplay();
+                await PrepareReplayAsync();
+                return;
             }
-            else if (ReplayDecoder.TryDecodeReplay(await API.GetReplayDataAsync(CurrentScore.Replay), out replay))
+
+            if (!await ReplayerMenuLoader.Instance.CanLaunchReplay(replay.info))
             {
-                Log.Notice("Downloaded replay from API. Caching for future use!");
-
-                // Force enable cache so we dont bother the API too much
-                if (!ReplayerCache.TryWriteReplay((int)CurrentScore.Id, replay)) Log.Warn($"Failed to cache replay for {CurrentScore.Song.Name} {CurrentScore.Difficulty.ModeName} {CurrentScore.Difficulty.Name}! ({CurrentScore.Id})");
-
-                if (!await ReplayerMenuLoader.Instance.CanLaunchReplay(replay.info))
-                {
-                    Log.Warn($"Failed to load replay for {CurrentScore.Song.Name}");
-                    SelectRandomReplay();
-                    await PrepareReplayAsync();
-                    return;
-                }
+                Log.Warn($"Failed to load replay for {CurrentScore.Song.Name}");
+                SelectRandomReplay();
+                await PrepareReplayAsync();
+                return;
             }
 
             LoadedReplay = replay;
@@ -208,7 +196,7 @@ namespace AwayPlayer
                 var beatmapPack = LevelsModel.GetLevelPackForLevelId(levelId);
                 var beatmapLevel = LevelsModel.GetBeatmapLevel(levelId);
                 var beatmapCharacteristics = beatmapLevel.GetCharacteristics();
-                var beatmapDifficultySet = beatmapLevel.GetDifficulties(beatmapCharacteristics.First((x) => x.serializedName == characteristicName));
+                var beatmapDifficultySet = beatmapLevel.GetDifficulties(beatmapCharacteristics.First((x) => x.SerializedName() == characteristicName));
                 var beatmapDifficulty = beatmapDifficultySet.Where((x) => x == (BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), difficultyName)).FirstOrDefault();
 
             
@@ -221,7 +209,7 @@ namespace AwayPlayer
                     Log.Error("Could not force select LevelCategory.All. Trying to show level preview anyway...");
                 }
 
-                selectionController.Setup(SongPackMask.all, BeatmapDifficultyMask.All, new BeatmapCharacteristicSO[0], false, false, "Play", beatmapPack, SelectLevelCategoryViewController.LevelCategory.All, beatmapLevel, true);
+                selectionController.Setup(SongPackMask.all, BeatmapDifficultyMask.All, Array.Empty<BeatmapCharacteristic>(), false, false, "Play", beatmapPack, SelectLevelCategoryViewController.LevelCategory.All, beatmapLevel, true);
                 var characteristicsSegmentedControl = selectionController.
                     _levelCollectionNavigationController.
                     _levelDetailViewController.
@@ -317,11 +305,8 @@ namespace AwayPlayer
             IsPlaying = true;
             ReplayerLauncher.ReplayWasFinishedEvent += ReplayerLauncher_ReplayWasFinishedEvent;
 
-            // We dont want to bother the API if we already have the player
-#pragma warning disable IDE0074 // Use compound assignment
-            if (Player == null) Player = await WebUtils.SendAndDeserializeAsync<Player>(BEATLEADER_API_URL + "/player/" +  replay.info.playerID);
-#pragma warning restore IDE0074 // Use compound assignment
-            await ReplayerMenuLoader.Instance.StartReplayAsync(replay, replay.info.playerID == "76561198967815164" ? BeatLeader.DataManager.ProfileManager.Profile : Player, ReplayerSettings.UserSettings);
+            var player = replay.info.playerID == "76561198967815164" ? BeatLeader.DataManager.ProfileManager.Profile : null;
+            await ReplayerMenuLoader.Instance.StartReplayAsync(replay, player, null, ReplayerSettings.UserSettings);
         }
     }
 }

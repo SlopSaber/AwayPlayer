@@ -1,0 +1,6 @@
+<Project>
+  <ItemGroup>
+    <OutputCopy Include="$(OutputPath)Community.CsharpSqlite.SQLiteClient.dll" OutputPath="Plugins\Community.CsharpSqlite.SQLiteClient.dll" />
+    <OutputCopy Include="$(OutputPath)Community.CsharpSqlite.dll" OutputPath="Plugins\Community.CsharpSqlite.dll" />
+  </ItemGroup>
+</Project>
