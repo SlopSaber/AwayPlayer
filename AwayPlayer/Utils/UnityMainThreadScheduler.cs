@@ -16,6 +16,7 @@ public class UnityMainThreadDispatcher : ITickable
     private readonly List<EnqueuedTask> DelayedTasks = new List<EnqueuedTask>();
     private readonly List<EnqueuedTask> PausedTasks = new List<EnqueuedTask>();
     private readonly List<Guid> FinishedTasks = new List<Guid>();
+    private int _lastPendingLogMs;
 
     public void Tick()
     {
@@ -31,6 +32,11 @@ public class UnityMainThreadDispatcher : ITickable
         lock (DelayedTasks)
         {
             var currentTime = (int)(Time.realtimeSinceStartup * 1000f);
+            if (DelayedTasks.Count > 0 && currentTime - _lastPendingLogMs >= 1000)
+            {
+                log.Info($"Scheduler pending={DelayedTasks.Count}, now={currentTime}, next={DelayedTasks.Min(task => task.Timeout)}, timeScale={Time.timeScale}");
+                _lastPendingLogMs = currentTime;
+            }
 
             List<EnqueuedTask> actionsToRemove = new List<EnqueuedTask>();
 
@@ -39,7 +45,7 @@ public class UnityMainThreadDispatcher : ITickable
                 var action = DelayedTasks[i];
                 if (currentTime >= action.Timeout)
                 {
-                    //log.Info("Invoking target");
+                    log.Info($"Scheduler running job {action.Id} at {currentTime}");
                     action.Invoke();
                     actionsToRemove.Add(action);
                     //log.Info("Target invoked");
