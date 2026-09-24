@@ -185,7 +185,7 @@ namespace AwayPlayer
         {
             try
             {
-                var selectionController = GameObject.Find("LevelSelectionNavigationController").GetComponent<LevelSelectionNavigationController>();
+                var selectionController = GameObject.Find("LevelSelectionNavigationController")?.GetComponent<LevelSelectionNavigationController>();
 
                 if (selectionController == null)
                 {
@@ -195,68 +195,54 @@ namespace AwayPlayer
 
                 var beatmapPack = LevelsModel.GetLevelPackForLevelId(levelId);
                 var beatmapLevel = LevelsModel.GetBeatmapLevel(levelId);
-                var beatmapCharacteristics = beatmapLevel.GetCharacteristics();
-                var beatmapDifficultySet = beatmapLevel.GetDifficulties(beatmapCharacteristics.First((x) => x.SerializedName() == characteristicName));
-                var beatmapDifficulty = beatmapDifficultySet.Where((x) => x == (BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), difficultyName)).FirstOrDefault();
+                if (beatmapLevel == null)
+                {
+                    Log.Warn($"Preview unavailable: {levelId} is not in the loaded song list.");
+                    return;
+                }
 
-            
-                try
+                var beatmapCharacteristics = beatmapLevel.GetCharacteristics();
+                if (!beatmapCharacteristics.Any(x => x.SerializedName() == characteristicName) ||
+                    !Enum.TryParse(difficultyName, out BeatmapDifficulty beatmapDifficulty))
                 {
-                    //ForceSelectFilterCategory(SelectLevelCategoryViewController.LevelCategory.All);
+                    Log.Warn($"Preview unavailable: {characteristicName} {difficultyName} is not valid for {levelId}.");
+                    return;
                 }
-                catch (System.NullReferenceException)
-                {
-                    Log.Error("Could not force select LevelCategory.All. Trying to show level preview anyway...");
-                }
+
+                var characteristic = beatmapCharacteristics.First(x => x.SerializedName() == characteristicName);
 
                 selectionController.Setup(SongPackMask.all, BeatmapDifficultyMask.All, Array.Empty<BeatmapCharacteristic>(), false, false, "Play", beatmapPack, SelectLevelCategoryViewController.LevelCategory.All, beatmapLevel, true);
+                if (selectionController.beatmapLevel == null || selectionController.beatmapLevel.levelID != levelId)
+                {
+                    return;
+                }
+
                 var characteristicsSegmentedControl = selectionController.
                     _levelCollectionNavigationController.
                     _levelDetailViewController.
                     _standardLevelDetailView.
                     _beatmapCharacteristicSegmentedControlController;
+                if (characteristicsSegmentedControl.selectedBeatmapCharacteristic != characteristic)
+                {
+                    var characteristicIndex = characteristicsSegmentedControl._currentlyAvailableBeatmapCharacteristics.IndexOf(characteristic);
+                    if (characteristicIndex < 0) return;
 
-                //characteristicsSegmentedControl.SetData(characteristicsSegmentedControl._currentlyAvailableBeatmapCharacteristics, beatmapCharacteristics.First((x) => x.serializedName == characteristicName), new HashSet<BeatmapCharacteristicSO>());
-                //_beatmapCharacteristics.IndexOf(beatmapCharacteristic);
+                    var characteristicControl = characteristicsSegmentedControl._segmentedControl;
+                    characteristicControl.SelectCellWithNumber(characteristicIndex);
+                    characteristicsSegmentedControl.HandleBeatmapCharacteristicSegmentedControlDidSelectCell(characteristicControl, characteristicIndex);
+                }
 
-                //var characteristicSegmentedControl = selectionController.
-                //    _levelCollectionNavigationController.
-                //    _levelDetailViewController.
-                //    _standardLevelDetailView.
-                //    _beatmapCharacteristicSegmentedControlController.
-                //    _segmentedControl;
-
-                //characteristicSegmentedControl.SelectCellWithNumber(characteristicIndex);
-
-                //selectionController.
-                //    _levelCollectionNavigationController.
-                //    _levelDetailViewController.
-                //    _standardLevelDetailView.
-                //    _beatmapCharacteristicSegmentedControlController.
-                //    HandleDifficultySegmentedControlDidSelectCell(characteristicSegmentedControl, characteristicIndex);
-
-                var difficultyIndex = selectionController.
+                var difficultyController = selectionController.
                     _levelCollectionNavigationController.
                     _levelDetailViewController.
                     _standardLevelDetailView.
-                    _beatmapDifficultySegmentedControlController.
-                    GetClosestDifficultyIndex(beatmapDifficulty);
+                    _beatmapDifficultySegmentedControlController;
+                var difficultyIndex = difficultyController._difficulties.IndexOf(beatmapDifficulty);
+                if (difficultyIndex < 0) return;
 
-                var difficultySegmentedControl = selectionController.
-                    _levelCollectionNavigationController.
-                    _levelDetailViewController.
-                    _standardLevelDetailView.
-                    _beatmapDifficultySegmentedControlController.
-                    _difficultySegmentedControl;
-
+                var difficultySegmentedControl = difficultyController._difficultySegmentedControl;
                 difficultySegmentedControl.SelectCellWithNumber(difficultyIndex);
-
-                selectionController.
-                    _levelCollectionNavigationController.
-                    _levelDetailViewController.
-                    _standardLevelDetailView.
-                    _beatmapDifficultySegmentedControlController.
-                    HandleDifficultySegmentedControlDidSelectCell(difficultySegmentedControl, difficultyIndex);
+                difficultyController.HandleDifficultySegmentedControlDidSelectCell(difficultySegmentedControl, difficultyIndex);
             }
             catch (Exception e)
             {
@@ -296,8 +282,13 @@ namespace AwayPlayer
 
         public async Task StartReplayAsync()
         {
-            //Log.Debug($"Starting replay...\nEnabled: {Enabled}\nIsPlaying: {IsPlaying}\nIsLoaded: {IsLoaded}");
-            if (!Enabled || IsPlaying || !IsLoaded) return;
+            if (!Enabled || IsPlaying || !IsLoaded)
+            {
+                Log.Warn($"Replay start skipped: enabled={Enabled}, playing={IsPlaying}, loaded={IsLoaded}");
+                return;
+            }
+
+            Log.Info($"Starting replay: {CurrentScore.Song.Name}");
             await StartReplayAsync(LoadedReplay);
         }
         public async Task StartReplayAsync(Replay replay)

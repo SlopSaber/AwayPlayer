@@ -30,7 +30,7 @@ public class UnityMainThreadDispatcher : ITickable
 
         lock (DelayedTasks)
         {
-            var currentTime = (int)(Time.time * 1000);
+            var currentTime = (int)(Time.realtimeSinceStartup * 1000f);
 
             List<EnqueuedTask> actionsToRemove = new List<EnqueuedTask>();
 
@@ -93,8 +93,9 @@ public class UnityMainThreadDispatcher : ITickable
 
     public Guid EnqueueWithDelay(Action target, int delayMilliseconds, Action<int> callback, int callbackInterval)
     {
-        int invokeAtMs = ((int)Time.time * 1000) + delayMilliseconds;
-        int nextCallback = ((int)Time.time * 1000) + callbackInterval;
+        int now = (int)(Time.realtimeSinceStartup * 1000f);
+        int invokeAtMs = now + delayMilliseconds;
+        int nextCallback = now + callbackInterval;
 
         var task = new EnqueuedTask(target, invokeAtMs, callback, nextCallback, callbackInterval);
 
@@ -204,8 +205,8 @@ public class UnityMainThreadDispatcher : ITickable
 
         public void IncrementCallback() => NextCallback += CallbackInterval;
         public void Invoke() => Target.Invoke();
-        public void InvokeCallback() => Callback.Invoke((int)((Timeout - (Time.time * 1000))/1000));
-        public void Pause() => PausedAt = (int)(Time.time * 1000);
-        public void Resume() => Timeout += (int)(Time.time * 1000) - PausedAt;
+        public void InvokeCallback() => Callback.Invoke((Timeout - (int)(Time.realtimeSinceStartup * 1000f)) / 1000);
+        public void Pause() => PausedAt = (int)(Time.realtimeSinceStartup * 1000f);
+        public void Resume() => Timeout += (int)(Time.realtimeSinceStartup * 1000f) - PausedAt;
     }
 }

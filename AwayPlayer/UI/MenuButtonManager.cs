@@ -13,7 +13,7 @@ namespace AwayPlayer.UI
     {
         private const string AFK_BUTTON = "" +
             "<bg id='root'>" +
-            "<button id='afk-button' text='AFK Mode' anchor-pos-x='122' anchor-pos-y='-2' on-click='afk-click'/>" +
+            "<button id='afk-button' text='AFK Mode' anchor-pos-x='122' anchor-pos-y='10' on-click='afk-click'/>" +
             "</bg>";
         private const string BLACKLIST_BUTTON = "" +
             "<bg id='root'>" +
@@ -160,6 +160,12 @@ namespace AwayPlayer.UI
                 _menuFloatingScreen.Visible = false;
                 return;
             }
+            if (!SLM.IsReady || SLM.FilteredScores.Length == 0)
+            {
+                Plugin.Logger.Warn("AwayPlayer scores are not ready or the current filter has no scores.");
+                return;
+            }
+
             _replayManager.Setup();
             _menuFloatingScreen.Visible = true;
         }
