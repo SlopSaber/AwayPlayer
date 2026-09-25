@@ -13,7 +13,7 @@ namespace AwayPlayer.UI
     internal class MenuButtonManager : BSMLAutomaticViewController, IInitializable
     {
         private const string AFK_BUTTON = "" +
-            "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='65' anchor-pos-y='-7' pref-width='7' pref-height='7' on-click='afk-click'/>";
+            "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='69' anchor-pos-y='-8' pref-width='10.5' pref-height='7' on-click='afk-click'/>";
         private const string BLACKLIST_BUTTON = "" +
             "<bg id='root'>" +
             "<button id='blacklist-button' text='B' active='~blacklist-button-active' hover-hint='Adds the current song to the AwayPlayer backlist' anchor-pos-x='56' anchor-pos-y='-3' pref-width='8' pref-height='8' on-click='blacklist-click'/>" +
