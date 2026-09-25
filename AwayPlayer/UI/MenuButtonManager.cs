@@ -4,7 +4,6 @@ using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
 using System.Linq;
 using UnityEngine;
-using VRUIControls;
 using Zenject;
 
 #pragma warning disable CS0649 // Value is never assigend to - We have zenject
@@ -14,7 +13,7 @@ namespace AwayPlayer.UI
     {
         private const string AFK_BUTTON = "" +
             "<bg id='root'>" +
-            "<button id='afk-button' text='AFK' word-wrapping='false' anchor-pos-x='70' anchor-pos-y='10' pref-width='9' pref-height='6' on-click='afk-click'/>" +
+            "<button id='afk-button' text='AFK' font-size='3' word-wrapping='false' anchor-pos-x='-20' anchor-pos-y='3' pref-width='9' pref-height='6' on-click='afk-click'/>" +
             "</bg>";
         private const string BLACKLIST_BUTTON = "" +
             "<bg id='root'>" +
@@ -106,25 +105,13 @@ namespace AwayPlayer.UI
 
         public void Initialize()
         {
-            BSMLParser.Instance.Parse(AFK_BUTTON, Resources.FindObjectsOfTypeAll<LevelSelectionNavigationController>().First().gameObject, this);
-            var parentCanvas = afkRootTransform.GetComponentInParent<Canvas>();
-            var parentCurve = parentCanvas?.rootCanvas.GetComponent<HMUI.CurvedCanvasSettings>();
-            var afkButtonCanvas = afkRootTransform.gameObject.AddComponent<Canvas>();
-            afkButtonCanvas.overrideSorting = true;
-            afkButtonCanvas.sortingOrder = 100;
-            afkButtonCanvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord2;
-            if (parentCurve != null)
-            {
-                afkRootTransform.gameObject.AddComponent<HMUI.CurvedCanvasSettings>().SetRadius(parentCurve.radius);
-            }
-            if (BeatSaberUI.DiContainer.IsInstalling)
-            {
-                BeatSaberUI.DiContainer.QueueForInject(afkRootTransform.gameObject.AddComponent<VRGraphicRaycaster>());
-            }
-            else
-            {
-                BeatSaberUI.DiContainer.InstantiateComponent<VRGraphicRaycaster>(afkRootTransform.gameObject);
-            }
+            var levelSelection = Resources.FindObjectsOfTypeAll<LevelSelectionNavigationController>().First();
+            var title = Resources.FindObjectsOfTypeAll<HMUI.TitleViewController>().First();
+            BSMLParser.Instance.Parse(AFK_BUTTON, title.gameObject, this);
+            var afkRoot = afkRootTransform.gameObject;
+            afkRoot.SetActive(levelSelection.isActivated);
+            levelSelection.didActivateEvent += (firstActivation, addedToHierarchy, screenSystemEnabling) => { if (afkRoot != null) afkRoot.SetActive(true); };
+            levelSelection.didDeactivateEvent += (removedFromHierarchy, screenSystemDisabling) => { if (afkRoot != null) afkRoot.SetActive(false); };
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
             if (_config.BlacklistEnable)
             {
