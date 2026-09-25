@@ -13,7 +13,7 @@ namespace AwayPlayer.UI
 {
     internal class MenuButtonManager : BSMLAutomaticViewController, IInitializable
     {
-        private const float TitleUnderlineExtraHeight = 0.18f;
+        private const float TitleUnderlineHeightScale = 1.3f;
         private const string AFK_BUTTON = "" +
             "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='69' anchor-pos-y='-7' pref-width='10.5' pref-height='7' on-click='afk-click'/>";
         private const string BLACKLIST_BUTTON = "" +
@@ -113,9 +113,7 @@ namespace AwayPlayer.UI
             var underline = afkButtonTransform.Find("Underline");
             if (underline != null)
             {
-                var shadow = underline.gameObject.AddComponent<Shadow>();
-                shadow.effectColor = new Color(1f, 1f, 1f, 0.5f);
-                shadow.effectDistance = new Vector2(0f, TitleUnderlineExtraHeight);
+                underline.gameObject.AddComponent<TitleUnderlineHeightEffect>().HeightScale = TitleUnderlineHeightScale;
             }
             var afkRoot = afkButtonTransform.gameObject;
             title.gameObject.AddComponent<AfkTitleButtonVisibility>().Initialize(afkRoot, levelSelection.gameObject);
@@ -271,6 +269,26 @@ namespace AwayPlayer.UI
             return levelId != null && levelId.StartsWith(customLevelPrefix, System.StringComparison.OrdinalIgnoreCase)
                 ? levelId.Substring(customLevelPrefix.Length).ToUpperInvariant()
                 : null;
+        }
+    }
+
+    internal sealed class TitleUnderlineHeightEffect : BaseMeshEffect
+    {
+        public float HeightScale { get; set; } = 1f;
+
+        public override void ModifyMesh(VertexHelper vertices)
+        {
+            if (!IsActive()) return;
+            float bottom = graphic.rectTransform.rect.yMin;
+            UIVertex vertex = default;
+            for (int i = 0; i < vertices.currentVertCount; i++)
+            {
+                vertices.PopulateUIVertex(ref vertex, i);
+                var position = vertex.position;
+                position.y = bottom + (position.y - bottom) * HeightScale;
+                vertex.position = position;
+                vertices.SetUIVertex(vertex, i);
+            }
         }
     }
 
