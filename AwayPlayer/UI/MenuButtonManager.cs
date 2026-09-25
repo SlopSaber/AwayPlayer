@@ -38,8 +38,8 @@ namespace AwayPlayer.UI
         private bool _primaryBlacklistButtonActive = false;
         private bool _primaryWhitelistButtonActive = false;
 
-        [UIComponent("afk-button")]
-        private RectTransform afkButtonTransform { get; set; }
+        [UIComponent("root")]
+        private RectTransform afkRootTransform { get; set; }
 
         [UIValue("blacklist-button-active")]
         public bool BlacklistButtonActive
@@ -107,16 +107,23 @@ namespace AwayPlayer.UI
         public void Initialize()
         {
             BSMLParser.Instance.Parse(AFK_BUTTON, Resources.FindObjectsOfTypeAll<LevelSelectionNavigationController>().First().gameObject, this);
-            var afkButtonCanvas = afkButtonTransform.gameObject.AddComponent<Canvas>();
+            var parentCanvas = afkRootTransform.GetComponentInParent<Canvas>();
+            var parentCurve = parentCanvas?.rootCanvas.GetComponent<HMUI.CurvedCanvasSettings>();
+            var afkButtonCanvas = afkRootTransform.gameObject.AddComponent<Canvas>();
             afkButtonCanvas.overrideSorting = true;
             afkButtonCanvas.sortingOrder = 100;
+            afkButtonCanvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord2;
+            if (parentCurve != null)
+            {
+                afkRootTransform.gameObject.AddComponent<HMUI.CurvedCanvasSettings>().SetRadius(parentCurve.radius);
+            }
             if (BeatSaberUI.DiContainer.IsInstalling)
             {
-                BeatSaberUI.DiContainer.QueueForInject(afkButtonTransform.gameObject.AddComponent<VRGraphicRaycaster>());
+                BeatSaberUI.DiContainer.QueueForInject(afkRootTransform.gameObject.AddComponent<VRGraphicRaycaster>());
             }
             else
             {
-                BeatSaberUI.DiContainer.InstantiateComponent<VRGraphicRaycaster>(afkButtonTransform.gameObject);
+                BeatSaberUI.DiContainer.InstantiateComponent<VRGraphicRaycaster>(afkRootTransform.gameObject);
             }
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
             if (_config.BlacklistEnable)
