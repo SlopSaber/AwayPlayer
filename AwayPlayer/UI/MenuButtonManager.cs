@@ -14,7 +14,6 @@ namespace AwayPlayer.UI
     internal class MenuButtonManager : BSMLAutomaticViewController, IInitializable
     {
         private const float TitleUnderlineHeightScale = 1.6f;
-        private const float TitleUnderlineWidthScale = 1.13f;
         private const string AFK_BUTTON = "" +
             "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='69' anchor-pos-y='-7' pref-width='10.5' pref-height='7' on-click='afk-click'/>";
         private const string BLACKLIST_BUTTON = "" +
@@ -111,18 +110,11 @@ namespace AwayPlayer.UI
             var hierarchy = BeatSaberUI.DiContainer.Resolve<HMUI.HierarchyManager>();
             var title = hierarchy.GetField<HMUI.ScreenSystem, HMUI.HierarchyManager>("_screenSystem").titleViewController;
             BSMLParser.Instance.Parse(AFK_BUTTON, title.gameObject, this);
-            var background = afkButtonTransform.Find("BG");
-            if (background != null)
-            {
-                var roundSprite = Resources.FindObjectsOfTypeAll<Sprite>().FirstOrDefault(sprite => sprite.name == "RoundRect28");
-                if (roundSprite != null) background.GetComponent<Image>().sprite = roundSprite;
-            }
             var underline = afkButtonTransform.Find("Underline");
             if (underline != null)
             {
                 var effect = underline.gameObject.AddComponent<TitleUnderlineHeightEffect>();
                 effect.HeightScale = TitleUnderlineHeightScale;
-                effect.WidthScale = TitleUnderlineWidthScale;
             }
             var afkRoot = afkButtonTransform.gameObject;
             title.gameObject.AddComponent<AfkTitleButtonVisibility>().Initialize(afkRoot, levelSelection.gameObject);
@@ -284,19 +276,16 @@ namespace AwayPlayer.UI
     internal sealed class TitleUnderlineHeightEffect : BaseMeshEffect
     {
         public float HeightScale { get; set; } = 1f;
-        public float WidthScale { get; set; } = 1f;
 
         public override void ModifyMesh(VertexHelper vertices)
         {
             if (!IsActive()) return;
-            float left = graphic.rectTransform.rect.xMin;
             float bottom = graphic.rectTransform.rect.yMin;
             UIVertex vertex = default;
             for (int i = 0; i < vertices.currentVertCount; i++)
             {
                 vertices.PopulateUIVertex(ref vertex, i);
                 var position = vertex.position;
-                position.x = left + (position.x - left) * WidthScale;
                 position.y = bottom + (position.y - bottom) * HeightScale;
                 vertex.position = position;
                 vertices.SetUIVertex(vertex, i);
