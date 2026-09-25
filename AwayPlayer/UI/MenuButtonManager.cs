@@ -2,6 +2,7 @@
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
+using IPA.Utilities;
 using System.Linq;
 using UnityEngine;
 using Zenject;
@@ -106,10 +107,11 @@ namespace AwayPlayer.UI
         public void Initialize()
         {
             var levelSelection = Resources.FindObjectsOfTypeAll<LevelSelectionNavigationController>().First();
-            var title = Resources.FindObjectsOfTypeAll<HMUI.TitleViewController>().First();
+            var hierarchy = BeatSaberUI.DiContainer.Resolve<HMUI.HierarchyManager>();
+            var title = hierarchy.GetField<HMUI.ScreenSystem, HMUI.HierarchyManager>("_screenSystem").titleViewController;
             BSMLParser.Instance.Parse(AFK_BUTTON, title.gameObject, this);
             var afkRoot = afkRootTransform.gameObject;
-            afkRoot.SetActive(levelSelection.isActivated);
+            afkRoot.SetActive(levelSelection.gameObject.activeInHierarchy);
             levelSelection.didActivateEvent += (firstActivation, addedToHierarchy, screenSystemEnabling) => { if (afkRoot != null) afkRoot.SetActive(true); };
             levelSelection.didDeactivateEvent += (removedFromHierarchy, screenSystemDisabling) => { if (afkRoot != null) afkRoot.SetActive(false); };
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
