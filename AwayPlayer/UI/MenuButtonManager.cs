@@ -111,9 +111,7 @@ namespace AwayPlayer.UI
             var title = hierarchy.GetField<HMUI.ScreenSystem, HMUI.HierarchyManager>("_screenSystem").titleViewController;
             BSMLParser.Instance.Parse(AFK_BUTTON, title.gameObject, this);
             var afkRoot = afkRootTransform.gameObject;
-            afkRoot.SetActive(levelSelection.gameObject.activeInHierarchy);
-            levelSelection.didActivateEvent += (firstActivation, addedToHierarchy, screenSystemEnabling) => { if (afkRoot != null) afkRoot.SetActive(true); };
-            levelSelection.didDeactivateEvent += (removedFromHierarchy, screenSystemDisabling) => { if (afkRoot != null) afkRoot.SetActive(false); };
+            title.gameObject.AddComponent<AfkTitleButtonVisibility>().Initialize(afkRoot, levelSelection.gameObject);
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
             if (_config.BlacklistEnable)
             {
@@ -266,6 +264,33 @@ namespace AwayPlayer.UI
             return levelId != null && levelId.StartsWith(customLevelPrefix, System.StringComparison.OrdinalIgnoreCase)
                 ? levelId.Substring(customLevelPrefix.Length).ToUpperInvariant()
                 : null;
+        }
+    }
+
+    internal sealed class AfkTitleButtonVisibility : MonoBehaviour
+    {
+        private GameObject buttonRoot;
+        private GameObject levelSelection;
+
+        internal void Initialize(GameObject root, GameObject menu)
+        {
+            buttonRoot = root;
+            levelSelection = menu;
+            UpdateVisibility();
+        }
+
+        private void Update()
+        {
+            UpdateVisibility();
+        }
+
+        private void UpdateVisibility()
+        {
+            if (buttonRoot == null) return;
+            var shouldShow = levelSelection != null && levelSelection.activeInHierarchy;
+            if (buttonRoot.activeSelf == shouldShow) return;
+            buttonRoot.SetActive(shouldShow);
+            if (shouldShow) Debug.Log("[AwayPlayer] AFK title button visible");
         }
     }
 }
