@@ -122,16 +122,25 @@ namespace AwayPlayer.UI
 
         private void OnContentChanged(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType type)
         {
-            if (type == StandardLevelDetailViewController.ContentType.OwnedAndReady) UpdateButtons(controller.beatmapLevel.levelID.Remove(0, 13).ToUpper());
+            if (type == StandardLevelDetailViewController.ContentType.OwnedAndReady) UpdateButtons(GetSelectedSongHash(controller));
         }
 
         private void OnDifficultyChanged(StandardLevelDetailViewController controller)
         {
-            UpdateButtons(controller.beatmapLevel.levelID.Remove(0, 13).ToUpper());
+            UpdateButtons(GetSelectedSongHash(controller));
         }
 
         private void UpdateButtons(string selectedSong)
         {
+            if (selectedSong == null)
+            {
+                BlacklistButtonActive = false;
+                WhitelistButtonActive = false;
+                PrimaryBlacklistButtonActive = false;
+                PrimaryWhitelistButtonActive = false;
+                return;
+            }
+
             var blacklist = WBMgr.GetBlacklist();
             var whitelist = WBMgr.GetWhitelist();
 
@@ -174,6 +183,7 @@ namespace AwayPlayer.UI
         public void BlacklistClick()
         {
             var selectedSong = GetSelectedSongHash();
+            if (selectedSong == null) return;
 
             if (WBMgr.GetWhitelist().Contains(selectedSong))
             {
@@ -196,6 +206,7 @@ namespace AwayPlayer.UI
         public void PrimaryBlacklistClick()
         {
             var selectedSong = GetSelectedSongHash();
+            if (selectedSong == null) return;
             WBMgr.RemoveFromBlacklist(selectedSong);
             BlacklistButtonActive = true;
 
@@ -206,6 +217,7 @@ namespace AwayPlayer.UI
         public void WhitelistClick()
         {
             var selectedSong = GetSelectedSongHash();
+            if (selectedSong == null) return;
 
             if (WBMgr.GetBlacklist().Contains(selectedSong))
             {
@@ -223,6 +235,7 @@ namespace AwayPlayer.UI
         public void PrimaryWhitelistClick()
         {
             var selectedSong = GetSelectedSongHash();
+            if (selectedSong == null) return;
             WBMgr.RemoveFromWhitelist(selectedSong);
             WhitelistButtonActive = true;
 
@@ -232,7 +245,16 @@ namespace AwayPlayer.UI
         private string GetSelectedSongHash()
         {
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First();
-            return standardLevel.beatmapLevel.levelID.Remove(0, 13).ToUpper();
+            return GetSelectedSongHash(standardLevel);
+        }
+
+        private static string GetSelectedSongHash(StandardLevelDetailViewController controller)
+        {
+            const string customLevelPrefix = "custom_level_";
+            var levelId = controller.beatmapLevel?.levelID;
+            return levelId != null && levelId.StartsWith(customLevelPrefix, System.StringComparison.OrdinalIgnoreCase)
+                ? levelId.Substring(customLevelPrefix.Length).ToUpperInvariant()
+                : null;
         }
     }
 }
