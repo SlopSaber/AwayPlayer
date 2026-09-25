@@ -12,6 +12,7 @@ namespace AwayPlayer.UI
 {
     internal class MenuButtonManager : BSMLAutomaticViewController, IInitializable
     {
+        private const float TitleUnderlineHeightScale = 1.3f;
         private const string AFK_BUTTON = "" +
             "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='69' anchor-pos-y='-7' pref-width='10.5' pref-height='7' on-click='afk-click'/>";
         private const string BLACKLIST_BUTTON = "" +
@@ -108,6 +109,12 @@ namespace AwayPlayer.UI
             var hierarchy = BeatSaberUI.DiContainer.Resolve<HMUI.HierarchyManager>();
             var title = hierarchy.GetField<HMUI.ScreenSystem, HMUI.HierarchyManager>("_screenSystem").titleViewController;
             BSMLParser.Instance.Parse(AFK_BUTTON, title.gameObject, this);
+            var underline = afkButtonTransform.Find("Underline");
+            if (underline != null)
+            {
+                var scale = underline.localScale;
+                underline.localScale = new Vector3(scale.x, scale.y * TitleUnderlineHeightScale, scale.z);
+            }
             var afkRoot = afkButtonTransform.gameObject;
             title.gameObject.AddComponent<AfkTitleButtonVisibility>().Initialize(afkRoot, levelSelection.gameObject);
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
