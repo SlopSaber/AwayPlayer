@@ -4,6 +4,7 @@ using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
 using System.Linq;
 using UnityEngine;
+using VRUIControls;
 using Zenject;
 
 #pragma warning disable CS0649 // Value is never assigend to - We have zenject
@@ -13,7 +14,7 @@ namespace AwayPlayer.UI
     {
         private const string AFK_BUTTON = "" +
             "<bg id='root'>" +
-            "<button id='afk-button' text='AFK Mode' anchor-pos-x='122' anchor-pos-y='10' on-click='afk-click'/>" +
+            "<button id='afk-button' text='AFK' word-wrapping='false' anchor-pos-x='70' anchor-pos-y='10' pref-width='9' pref-height='6' on-click='afk-click'/>" +
             "</bg>";
         private const string BLACKLIST_BUTTON = "" +
             "<bg id='root'>" +
@@ -36,6 +37,9 @@ namespace AwayPlayer.UI
         private bool _whitelistButtonActive = true;
         private bool _primaryBlacklistButtonActive = false;
         private bool _primaryWhitelistButtonActive = false;
+
+        [UIComponent("afk-button")]
+        private RectTransform afkButtonTransform { get; set; }
 
         [UIValue("blacklist-button-active")]
         public bool BlacklistButtonActive
@@ -103,6 +107,17 @@ namespace AwayPlayer.UI
         public void Initialize()
         {
             BSMLParser.Instance.Parse(AFK_BUTTON, Resources.FindObjectsOfTypeAll<LevelSelectionNavigationController>().First().gameObject, this);
+            var afkButtonCanvas = afkButtonTransform.gameObject.AddComponent<Canvas>();
+            afkButtonCanvas.overrideSorting = true;
+            afkButtonCanvas.sortingOrder = 100;
+            if (BeatSaberUI.DiContainer.IsInstalling)
+            {
+                BeatSaberUI.DiContainer.QueueForInject(afkButtonTransform.gameObject.AddComponent<VRGraphicRaycaster>());
+            }
+            else
+            {
+                BeatSaberUI.DiContainer.InstantiateComponent<VRGraphicRaycaster>(afkButtonTransform.gameObject);
+            }
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
             if (_config.BlacklistEnable)
             {
