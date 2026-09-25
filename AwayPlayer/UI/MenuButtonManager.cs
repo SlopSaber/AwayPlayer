@@ -18,19 +18,19 @@ namespace AwayPlayer.UI
             "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='69' anchor-pos-y='-7' pref-width='10.5' pref-height='7' on-click='afk-click'/>";
         private const string BLACKLIST_BUTTON = "" +
             "<bg id='root'>" +
-            "<button id='blacklist-button' text='B' active='~blacklist-button-active' hover-hint='Adds the current song to the AwayPlayer backlist' anchor-pos-x='12' anchor-pos-y='-15.5' pref-width='8' pref-height='3' on-click='blacklist-click'/>" +
+            "<button id='blacklist-button' text='B' font-size='3.5' active='~blacklist-button-active' hover-hint='Adds the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-15.5' pref-width='6.8' pref-height='12' on-click='blacklist-click'/>" +
             "</bg>";
         private const string PRIMARY_BLACKLIST_BUTTON = "" +
             "<bg id='root'>" +
-            "<primary-button id='blacklist-button' active='~primary-blacklist-button-active' text='B' hover-hint='Removes the current song to the AwayPlayer backlist' anchor-pos-x='12' anchor-pos-y='-15.5' pref-width='8' pref-height='3' on-click='primary-blacklist-click'/>" +
+            "<primary-button id='blacklist-button' active='~primary-blacklist-button-active' text='B' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-15.5' pref-width='6.8' pref-height='12' on-click='primary-blacklist-click'/>" +
             "</bg>";
         private const string WHITELIST_BUTTON = "" +
             "<bg id='root'>" +
-            "<button id='whitelist-button' text='W' active='~whitelist-button-active' hover-hint='Adds the current song to the AwayPlayer whitelist' anchor-pos-x='4' anchor-pos-y='-15.5' pref-width='8' pref-height='3' on-click='whitelist-click'/>" +
+            "<button id='whitelist-button' text='W' font-size='3.5' active='~whitelist-button-active' hover-hint='Adds the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-15.5' pref-width='6.8' pref-height='12' on-click='whitelist-click'/>" +
             "</bg>";
         private const string PRIMARY_WHITELIST_BUTTON = "" +
             "<bg id='root'>" +
-            "<primary-button id='whitelist-button' active='~primary-whitelist-button-active' text='W' hover-hint='Removes the current song to the AwayPlayer whitelist' anchor-pos-x='4' anchor-pos-y='-15.5' pref-width='8' pref-height='3' on-click='primary-whitelist-click'/>" +
+            "<primary-button id='whitelist-button' active='~primary-whitelist-button-active' text='W' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-15.5' pref-width='6.8' pref-height='12' on-click='primary-whitelist-click'/>" +
             "</bg>";
 
         private bool _blacklistButtonActive = true;
