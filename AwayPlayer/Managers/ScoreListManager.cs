@@ -151,12 +151,11 @@ namespace AwayPlayer.Managers
 
             if (!string.IsNullOrWhiteSpace(settings.Playlist) && settings.Playlist != "None")
             {
-                filteredScores = filteredScores.Where((score) =>
-                {
-                    var playlist = Playlists.FirstOrDefault((x) => x.Title == settings.Playlist);
-                    if (playlist == null) return false;
-                    return playlist.Any((x) => x.Hash.ToUpper() == score.Song.Hash.ToUpper());
-                }).ToArray();
+                var playlist = Playlists.FirstOrDefault(x => x.Title == settings.Playlist);
+                var playlistHashes = playlist == null
+                    ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                    : new HashSet<string>(playlist.Select(x => x.Hash), StringComparer.OrdinalIgnoreCase);
+                filteredScores = filteredScores.Where(score => playlistHashes.Contains(score.Song.Hash)).ToArray();
                 Log.Debug($"Filtered on playlist: {filteredScores.Length}");
             }
 
