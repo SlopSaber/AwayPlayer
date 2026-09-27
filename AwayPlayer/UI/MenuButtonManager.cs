@@ -4,6 +4,7 @@ using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
 using IPA.Utilities;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -18,32 +19,35 @@ namespace AwayPlayer.UI
             "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='69' anchor-pos-y='-7' pref-width='10.5' pref-height='7' on-click='afk-click'/>";
         private const string BLACKLIST_BUTTON = "" +
             "<bg><button id='blacklist-button' text='B' font-size='3.5' active='~blacklist-button-active' hover-hint='Adds the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='blacklist-click'/></bg>";
-        private const string PRIMARY_BLACKLIST_BUTTON = "" +
-            "<bg><primary-button id='primary-blacklist-button' active='~primary-blacklist-button-active' text='B' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-blacklist-click'/></bg>";
         private const string WHITELIST_BUTTON = "" +
             "<bg><button id='whitelist-button' text='W' font-size='3.5' active='~whitelist-button-active' hover-hint='Adds the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='whitelist-click'/></bg>";
-        private const string PRIMARY_WHITELIST_BUTTON = "" +
-            "<bg><primary-button id='primary-whitelist-button' active='~primary-whitelist-button-active' text='W' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-whitelist-click'/></bg>";
+
+        private static readonly Color SelectedButtonColor = new Color32(0, 150, 255, 255);
 
         private bool _blacklistButtonActive = true;
         private bool _whitelistButtonActive = true;
-        private bool _primaryBlacklistButtonActive = false;
-        private bool _primaryWhitelistButtonActive = false;
+        private bool _blacklistSelected;
+        private bool _whitelistSelected;
+        private ButtonStyle _blacklistStyle;
+        private ButtonStyle _whitelistStyle;
+
+        private struct ButtonStyle
+        {
+            public Button Button;
+            public ColorBlock Colors;
+            public Color GraphicColor;
+            public TMP_Text Text;
+            public Color TextColor;
+        }
 
         [UIComponent("afk-button")]
         private RectTransform afkButtonTransform { get; set; }
 
         [UIComponent("blacklist-button")]
-        private RectTransform blacklistButtonTransform { get; set; }
-
-        [UIComponent("primary-blacklist-button")]
-        private RectTransform primaryBlacklistButtonTransform { get; set; }
+        private Button blacklistButton { get; set; }
 
         [UIComponent("whitelist-button")]
-        private RectTransform whitelistButtonTransform { get; set; }
-
-        [UIComponent("primary-whitelist-button")]
-        private RectTransform primaryWhitelistButtonTransform { get; set; }
+        private Button whitelistButton { get; set; }
 
         [UIValue("blacklist-button-active")]
         public bool BlacklistButtonActive
@@ -53,19 +57,6 @@ namespace AwayPlayer.UI
             {
                 _blacklistButtonActive = value;
                 NotifyPropertyChanged();
-                if (value) PrimaryBlacklistButtonActive = false;
-            }
-        }
-
-        [UIValue("primary-blacklist-button-active")]
-        public bool PrimaryBlacklistButtonActive
-        {
-            get => _primaryBlacklistButtonActive;
-            set
-            {
-                _primaryBlacklistButtonActive = value;
-                NotifyPropertyChanged();
-                if (value) BlacklistButtonActive = false;
             }
         }
 
@@ -77,19 +68,6 @@ namespace AwayPlayer.UI
             {
                 _whitelistButtonActive = value;
                 NotifyPropertyChanged();
-                if (value) PrimaryWhitelistButtonActive = false;
-            }
-        }
-
-        [UIValue("primary-whitelist-button-active")]
-        public bool PrimaryWhitelistButtonActive
-        {
-            get => _primaryWhitelistButtonActive;
-            set
-            {
-                _primaryWhitelistButtonActive = value;
-                NotifyPropertyChanged();
-                if (value) WhitelistButtonActive = false;
             }
         }
 
@@ -127,14 +105,12 @@ namespace AwayPlayer.UI
             if (_config.BlacklistEnable)
             {
                 BSMLParser.Instance.Parse(BLACKLIST_BUTTON, levelDetail, this);
-                BSMLParser.Instance.Parse(PRIMARY_BLACKLIST_BUTTON, levelDetail, this);
-                AlignSelectedButton(blacklistButtonTransform, primaryBlacklistButtonTransform);
+                _blacklistStyle = CaptureStyle(blacklistButton);
             }
             if (_config.WhitelistEnable)
             {
                 BSMLParser.Instance.Parse(WHITELIST_BUTTON, levelDetail, this);
-                BSMLParser.Instance.Parse(PRIMARY_WHITELIST_BUTTON, levelDetail, this);
-                AlignSelectedButton(whitelistButtonTransform, primaryWhitelistButtonTransform);
+                _whitelistStyle = CaptureStyle(whitelistButton);
             }
 
             var controller = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First();
@@ -142,14 +118,45 @@ namespace AwayPlayer.UI
             controller.didChangeContentEvent += OnContentChanged;
         }
 
-        private static void AlignSelectedButton(RectTransform regular, RectTransform selected)
+        private static ButtonStyle CaptureStyle(Button button)
         {
-            if (regular == null || selected == null) return;
-            selected.SetParent(regular.parent, false);
-            selected.anchorMin = regular.anchorMin;
-            selected.anchorMax = regular.anchorMax;
-            selected.pivot = regular.pivot;
-            selected.anchoredPosition = regular.anchoredPosition;
+            if (button == null) return default;
+            var text = button.GetComponentInChildren<TMP_Text>(true);
+            return new ButtonStyle
+            {
+                Button = button,
+                Colors = button.colors,
+                GraphicColor = button.targetGraphic != null ? button.targetGraphic.color : Color.white,
+                Text = text,
+                TextColor = text != null ? text.color : Color.white,
+            };
+        }
+
+        private static void SetSelectedStyle(ButtonStyle style, bool selected, string hoverHint)
+        {
+            if (style.Button == null) return;
+
+            var colors = style.Colors;
+            if (selected)
+            {
+                colors.normalColor = SelectedButtonColor;
+                colors.highlightedColor = SelectedButtonColor;
+                colors.selectedColor = SelectedButtonColor;
+            }
+            style.Button.colors = colors;
+
+            var image = style.Button.targetGraphic as Image;
+            if (image != null)
+            {
+                image.color = selected ? SelectedButtonColor : style.GraphicColor;
+            }
+            if (style.Text != null)
+            {
+                style.Text.color = selected && image == null ? SelectedButtonColor : style.TextColor;
+            }
+
+            var hint = style.Button.GetComponent<HMUI.HoverHint>();
+            if (hint != null) hint.text = hoverHint;
         }
 
         private void OnContentChanged(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType type)
@@ -168,28 +175,19 @@ namespace AwayPlayer.UI
             {
                 BlacklistButtonActive = false;
                 WhitelistButtonActive = false;
-                PrimaryBlacklistButtonActive = false;
-                PrimaryWhitelistButtonActive = false;
                 return;
             }
 
             var blacklist = WBMgr.GetBlacklist();
             var whitelist = WBMgr.GetWhitelist();
-
-            if (blacklist.Contains(selectedSong))
-            {
-                PrimaryBlacklistButtonActive = true;
-                return;
-            }
-
-            if (whitelist.Contains(selectedSong))
-            {
-                PrimaryWhitelistButtonActive = true;
-                return;
-            }
-
-            WhitelistButtonActive = true;
-            BlacklistButtonActive = true;
+            _blacklistSelected = blacklist.Contains(selectedSong);
+            _whitelistSelected = whitelist.Contains(selectedSong);
+            BlacklistButtonActive = _config.BlacklistEnable;
+            WhitelistButtonActive = _config.WhitelistEnable;
+            SetSelectedStyle(_blacklistStyle, _blacklistSelected,
+                _blacklistSelected ? "Removes the current song from the AwayPlayer blacklist" : "Adds the current song to the AwayPlayer blacklist");
+            SetSelectedStyle(_whitelistStyle, _whitelistSelected,
+                _whitelistSelected ? "Removes the current song from the AwayPlayer whitelist" : "Adds the current song to the AwayPlayer whitelist");
         }
 
         [UIAction("afk-click")]
@@ -217,32 +215,24 @@ namespace AwayPlayer.UI
             var selectedSong = GetSelectedSongHash();
             if (selectedSong == null) return;
 
-            if (WBMgr.GetWhitelist().Contains(selectedSong))
+            var wasBlacklisted = WBMgr.GetBlacklist().Contains(selectedSong);
+            if (wasBlacklisted)
             {
-                WBMgr.RemoveFromWhitelist(selectedSong);
-                WhitelistButtonActive = true;
+                WBMgr.RemoveFromBlacklist(selectedSong);
             }
-
-            WBMgr.AddToBlacklist(selectedSong);
-            PrimaryBlacklistButtonActive = true;
+            else
+            {
+                if (WBMgr.GetWhitelist().Contains(selectedSong)) WBMgr.RemoveFromWhitelist(selectedSong);
+                WBMgr.AddToBlacklist(selectedSong);
+            }
 
             SLM.ForceReload();
 
-            if (_replayManager.Enabled && _replayManager.CurrentScore.Song.Hash == selectedSong)
+            if (!wasBlacklisted && _replayManager.Enabled && _replayManager.CurrentScore.Song.Hash == selectedSong)
             {
                 _replayManager.SkipCurrentSelection();
             }
-        }
-
-        [UIAction("primary-blacklist-click")]
-        public void PrimaryBlacklistClick()
-        {
-            var selectedSong = GetSelectedSongHash();
-            if (selectedSong == null) return;
-            WBMgr.RemoveFromBlacklist(selectedSong);
-            BlacklistButtonActive = true;
-
-            SLM.ForceReload();
+            UpdateButtons(selectedSong);
         }
 
         [UIAction("whitelist-click")]
@@ -251,27 +241,18 @@ namespace AwayPlayer.UI
             var selectedSong = GetSelectedSongHash();
             if (selectedSong == null) return;
 
-            if (WBMgr.GetBlacklist().Contains(selectedSong))
+            if (WBMgr.GetWhitelist().Contains(selectedSong))
             {
-                WBMgr.RemoveFromBlacklist(selectedSong);
-                BlacklistButtonActive = true;
+                WBMgr.RemoveFromWhitelist(selectedSong);
+            }
+            else
+            {
+                if (WBMgr.GetBlacklist().Contains(selectedSong)) WBMgr.RemoveFromBlacklist(selectedSong);
+                WBMgr.AddToWhitelist(selectedSong);
             }
 
-            WBMgr.AddToWhitelist(selectedSong);
-            PrimaryWhitelistButtonActive = true;
-
             SLM.ForceReload();
-        }
-
-        [UIAction("primary-whitelist-click")]
-        public void PrimaryWhitelistClick()
-        {
-            var selectedSong = GetSelectedSongHash();
-            if (selectedSong == null) return;
-            WBMgr.RemoveFromWhitelist(selectedSong);
-            WhitelistButtonActive = true;
-
-            SLM.ForceReload();
+            UpdateButtons(selectedSong);
         }
 
         private string GetSelectedSongHash()
