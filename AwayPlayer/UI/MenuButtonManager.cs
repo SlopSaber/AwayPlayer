@@ -17,21 +17,13 @@ namespace AwayPlayer.UI
         private const string AFK_BUTTON = "" +
             "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='69' anchor-pos-y='-7' pref-width='10.5' pref-height='7' on-click='afk-click'/>";
         private const string BLACKLIST_BUTTON = "" +
-            "<bg id='root'>" +
-            "<button id='blacklist-button' text='B' font-size='3.5' active='~blacklist-button-active' hover-hint='Adds the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='blacklist-click'/>" +
-            "</bg>";
+            "<button id='blacklist-button' text='B' font-size='3.5' active='~blacklist-button-active' hover-hint='Adds the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='blacklist-click'/>";
         private const string PRIMARY_BLACKLIST_BUTTON = "" +
-            "<bg id='root'>" +
-            "<primary-button id='blacklist-button' active='~primary-blacklist-button-active' text='B' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer backlist' anchor-min='0 1' anchor-max='0 1' pivot='0.5 0.5' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-blacklist-click'/>" +
-            "</bg>";
+            "<primary-button id='primary-blacklist-button' active='~primary-blacklist-button-active' text='B' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-blacklist-click'/>";
         private const string WHITELIST_BUTTON = "" +
-            "<bg id='root'>" +
-            "<button id='whitelist-button' text='W' font-size='3.5' active='~whitelist-button-active' hover-hint='Adds the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='whitelist-click'/>" +
-            "</bg>";
+            "<button id='whitelist-button' text='W' font-size='3.5' active='~whitelist-button-active' hover-hint='Adds the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='whitelist-click'/>";
         private const string PRIMARY_WHITELIST_BUTTON = "" +
-            "<bg id='root'>" +
-            "<primary-button id='whitelist-button' active='~primary-whitelist-button-active' text='W' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer whitelist' anchor-min='0 1' anchor-max='0 1' pivot='0.5 0.5' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-whitelist-click'/>" +
-            "</bg>";
+            "<primary-button id='primary-whitelist-button' active='~primary-whitelist-button-active' text='W' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-whitelist-click'/>";
 
         private bool _blacklistButtonActive = true;
         private bool _whitelistButtonActive = true;
@@ -40,6 +32,18 @@ namespace AwayPlayer.UI
 
         [UIComponent("afk-button")]
         private RectTransform afkButtonTransform { get; set; }
+
+        [UIComponent("blacklist-button")]
+        private RectTransform blacklistButtonTransform { get; set; }
+
+        [UIComponent("primary-blacklist-button")]
+        private RectTransform primaryBlacklistButtonTransform { get; set; }
+
+        [UIComponent("whitelist-button")]
+        private RectTransform whitelistButtonTransform { get; set; }
+
+        [UIComponent("primary-whitelist-button")]
+        private RectTransform primaryWhitelistButtonTransform { get; set; }
 
         [UIValue("blacklist-button-active")]
         public bool BlacklistButtonActive
@@ -119,20 +123,34 @@ namespace AwayPlayer.UI
             var afkRoot = afkButtonTransform.gameObject;
             title.gameObject.AddComponent<AfkTitleButtonVisibility>().Initialize(afkRoot, levelSelection.gameObject);
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
+            var buttonMarkup = "<bg id='song-list-buttons'>";
             if (_config.BlacklistEnable)
             {
-                BSMLParser.Instance.Parse(BLACKLIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
-                BSMLParser.Instance.Parse(PRIMARY_BLACKLIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
+                buttonMarkup += BLACKLIST_BUTTON + PRIMARY_BLACKLIST_BUTTON;
             }
             if (_config.WhitelistEnable)
             {
-                BSMLParser.Instance.Parse(WHITELIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
-                BSMLParser.Instance.Parse(PRIMARY_WHITELIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
+                buttonMarkup += WHITELIST_BUTTON + PRIMARY_WHITELIST_BUTTON;
+            }
+            if (_config.BlacklistEnable || _config.WhitelistEnable)
+            {
+                BSMLParser.Instance.Parse(buttonMarkup + "</bg>", standardLevel.transform.Find("LevelDetail").gameObject, this);
+                AlignSelectedButton(blacklistButtonTransform, primaryBlacklistButtonTransform);
+                AlignSelectedButton(whitelistButtonTransform, primaryWhitelistButtonTransform);
             }
 
             var controller = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First();
             controller.didChangeDifficultyBeatmapEvent += OnDifficultyChanged;
             controller.didChangeContentEvent += OnContentChanged;
+        }
+
+        private static void AlignSelectedButton(RectTransform regular, RectTransform selected)
+        {
+            if (regular == null || selected == null) return;
+            selected.anchorMin = regular.anchorMin;
+            selected.anchorMax = regular.anchorMax;
+            selected.pivot = regular.pivot;
+            selected.anchoredPosition = regular.anchoredPosition;
         }
 
         private void OnContentChanged(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType type)
