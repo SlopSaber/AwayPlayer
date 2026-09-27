@@ -17,13 +17,13 @@ namespace AwayPlayer.UI
         private const string AFK_BUTTON = "" +
             "<button id='afk-button' text='AFK' font-size='3.5' word-wrapping='false' anchor-pos-x='69' anchor-pos-y='-7' pref-width='10.5' pref-height='7' on-click='afk-click'/>";
         private const string BLACKLIST_BUTTON = "" +
-            "<button id='blacklist-button' text='B' font-size='3.5' active='~blacklist-button-active' hover-hint='Adds the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='blacklist-click'/>";
+            "<bg><button id='blacklist-button' text='B' font-size='3.5' active='~blacklist-button-active' hover-hint='Adds the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='blacklist-click'/></bg>";
         private const string PRIMARY_BLACKLIST_BUTTON = "" +
-            "<primary-button id='primary-blacklist-button' active='~primary-blacklist-button-active' text='B' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-blacklist-click'/>";
+            "<bg><primary-button id='primary-blacklist-button' active='~primary-blacklist-button-active' text='B' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer backlist' anchor-pos-x='10.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-blacklist-click'/></bg>";
         private const string WHITELIST_BUTTON = "" +
-            "<button id='whitelist-button' text='W' font-size='3.5' active='~whitelist-button-active' hover-hint='Adds the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='whitelist-click'/>";
+            "<bg><button id='whitelist-button' text='W' font-size='3.5' active='~whitelist-button-active' hover-hint='Adds the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='whitelist-click'/></bg>";
         private const string PRIMARY_WHITELIST_BUTTON = "" +
-            "<primary-button id='primary-whitelist-button' active='~primary-whitelist-button-active' text='W' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-whitelist-click'/>";
+            "<bg><primary-button id='primary-whitelist-button' active='~primary-whitelist-button-active' text='W' font-size='3.5' hover-hint='Removes the current song to the AwayPlayer whitelist' anchor-pos-x='3.5' anchor-pos-y='-16.3' pref-width='6.8' pref-height='5.7' on-click='primary-whitelist-click'/></bg>";
 
         private bool _blacklistButtonActive = true;
         private bool _whitelistButtonActive = true;
@@ -123,19 +123,17 @@ namespace AwayPlayer.UI
             var afkRoot = afkButtonTransform.gameObject;
             title.gameObject.AddComponent<AfkTitleButtonVisibility>().Initialize(afkRoot, levelSelection.gameObject);
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
-            var buttonMarkup = "<bg id='song-list-buttons'>";
+            var levelDetail = standardLevel.transform.Find("LevelDetail").gameObject;
             if (_config.BlacklistEnable)
             {
-                buttonMarkup += BLACKLIST_BUTTON + PRIMARY_BLACKLIST_BUTTON;
+                BSMLParser.Instance.Parse(BLACKLIST_BUTTON, levelDetail, this);
+                BSMLParser.Instance.Parse(PRIMARY_BLACKLIST_BUTTON, levelDetail, this);
+                AlignSelectedButton(blacklistButtonTransform, primaryBlacklistButtonTransform);
             }
             if (_config.WhitelistEnable)
             {
-                buttonMarkup += WHITELIST_BUTTON + PRIMARY_WHITELIST_BUTTON;
-            }
-            if (_config.BlacklistEnable || _config.WhitelistEnable)
-            {
-                BSMLParser.Instance.Parse(buttonMarkup + "</bg>", standardLevel.transform.Find("LevelDetail").gameObject, this);
-                AlignSelectedButton(blacklistButtonTransform, primaryBlacklistButtonTransform);
+                BSMLParser.Instance.Parse(WHITELIST_BUTTON, levelDetail, this);
+                BSMLParser.Instance.Parse(PRIMARY_WHITELIST_BUTTON, levelDetail, this);
                 AlignSelectedButton(whitelistButtonTransform, primaryWhitelistButtonTransform);
             }
 
@@ -147,6 +145,7 @@ namespace AwayPlayer.UI
         private static void AlignSelectedButton(RectTransform regular, RectTransform selected)
         {
             if (regular == null || selected == null) return;
+            selected.SetParent(regular.parent, false);
             selected.anchorMin = regular.anchorMin;
             selected.anchorMax = regular.anchorMax;
             selected.pivot = regular.pivot;
