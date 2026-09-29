@@ -7,9 +7,9 @@
 			<InputAssemblies Include="$(OutputPath)Community.CsharpSqlite.SQLiteClient.dll" />
 		</ItemGroup>
 		<ItemGroup>
-			<LibraryPath Include="$(BeatSaberDir)\Beat Saber_Data\Managed\" />
-			<LibraryPath Include="$(BeatSaberDir)\Beat Saber_Data\Libs\" />
-			<LibraryPath Include="$(BeatSaberDir)\Plugins\" />
+			<LibraryPath Include="$(GameDirectory)\Beat Saber_Data\Managed\" />
+			<LibraryPath Include="$(GameDirectory)\Beat Saber_Data\Libs\" />
+			<LibraryPath Include="$(GameDirectory)\Plugins\" />
 			<LibraryPath Include="$(OutputPath)\" />
 		</ItemGroup>
 

@@ -1,4 +1,4 @@
-﻿using Community.CsharpSqlite.SQLiteClient;
+using Community.CsharpSqlite.SQLiteClient;
 using SiraUtil.Logging;
 using System;
 using System.IO;
@@ -11,7 +11,7 @@ namespace AwayPlayer.Managers
         internal SqliteConnection Database;
 
         [Inject]
-        private readonly SiraLog Log;
+        private readonly SiraLog Log = null!;
 
         public void Initialize()
         {
