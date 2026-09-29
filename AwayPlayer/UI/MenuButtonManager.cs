@@ -34,8 +34,10 @@ namespace AwayPlayer.UI
         private struct ButtonStyle
         {
             public Button Button;
-            public ColorBlock Colors;
-            public Color GraphicColor;
+            public HMUI.ImageView Background;
+            public Color BackgroundColor;
+            public Color BackgroundColor0;
+            public Color BackgroundColor1;
             public TMP_Text Text;
             public Color TextColor;
         }
@@ -122,11 +124,14 @@ namespace AwayPlayer.UI
         {
             if (button == null) return default;
             var text = button.GetComponentInChildren<TMP_Text>(true);
+            var background = button.transform.Find("BG")?.GetComponent<HMUI.ImageView>();
             return new ButtonStyle
             {
                 Button = button,
-                Colors = button.colors,
-                GraphicColor = button.targetGraphic != null ? button.targetGraphic.color : Color.white,
+                Background = background,
+                BackgroundColor = background != null ? background.color : Color.white,
+                BackgroundColor0 = background != null ? background.color0 : Color.white,
+                BackgroundColor1 = background != null ? background.color1 : Color.white,
                 Text = text,
                 TextColor = text != null ? text.color : Color.white,
             };
@@ -136,23 +141,19 @@ namespace AwayPlayer.UI
         {
             if (style.Button == null) return;
 
-            var colors = style.Colors;
-            if (selected)
+            if (style.Background != null)
             {
-                colors.normalColor = SelectedButtonColor;
-                colors.highlightedColor = SelectedButtonColor;
-                colors.selectedColor = SelectedButtonColor;
-            }
-            style.Button.colors = colors;
-
-            var image = style.Button.targetGraphic as Image;
-            if (image != null)
-            {
-                image.color = selected ? SelectedButtonColor : style.GraphicColor;
+                style.Background.color = selected ? SelectedButtonColor : style.BackgroundColor;
+                style.Background.color0 = selected
+                    ? new Color(1f, 1f, 1f, style.BackgroundColor0.a)
+                    : style.BackgroundColor0;
+                style.Background.color1 = selected
+                    ? new Color(1f, 1f, 1f, style.BackgroundColor1.a)
+                    : style.BackgroundColor1;
             }
             if (style.Text != null)
             {
-                style.Text.color = selected && image == null ? SelectedButtonColor : style.TextColor;
+                style.Text.color = selected && style.Background == null ? SelectedButtonColor : style.TextColor;
             }
 
             var hint = style.Button.GetComponent<HMUI.HoverHint>();
