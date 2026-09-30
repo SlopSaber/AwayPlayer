@@ -36,8 +36,7 @@ namespace AwayPlayer.UI
             public Button Button;
             public HMUI.ImageView Background;
             public Color BackgroundColor;
-            public Color BackgroundColor0;
-            public Color BackgroundColor1;
+            public bool BackgroundGradient;
             public TMP_Text Text;
             public Color TextColor;
         }
@@ -125,16 +124,20 @@ namespace AwayPlayer.UI
             if (button == null) return default;
             var text = button.GetComponentInChildren<TMP_Text>(true);
             var background = button.transform.Find("BG")?.GetComponent<HMUI.ImageView>();
-            return new ButtonStyle
+            var style = new ButtonStyle
             {
                 Button = button,
                 Background = background,
                 BackgroundColor = background != null ? background.color : Color.white,
-                BackgroundColor0 = background != null ? background.color0 : Color.white,
-                BackgroundColor1 = background != null ? background.color1 : Color.white,
+                BackgroundGradient = background != null && background.gradient,
                 Text = text,
                 TextColor = text != null ? text.color : Color.white,
             };
+
+            foreach (var animation in button.GetComponentsInChildren<HMUI.ButtonStaticAnimations>(true))
+                animation.enabled = false;
+
+            return style;
         }
 
         private static void SetSelectedStyle(ButtonStyle style, bool selected, string hoverHint)
@@ -144,12 +147,7 @@ namespace AwayPlayer.UI
             if (style.Background != null)
             {
                 style.Background.color = selected ? SelectedButtonColor : style.BackgroundColor;
-                style.Background.color0 = selected
-                    ? new Color(1f, 1f, 1f, style.BackgroundColor0.a)
-                    : style.BackgroundColor0;
-                style.Background.color1 = selected
-                    ? new Color(1f, 1f, 1f, style.BackgroundColor1.a)
-                    : style.BackgroundColor1;
+                style.Background.gradient = selected ? false : style.BackgroundGradient;
             }
             if (style.Text != null)
             {
