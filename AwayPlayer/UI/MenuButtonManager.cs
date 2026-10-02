@@ -37,6 +37,10 @@ namespace AwayPlayer.UI
             public HMUI.ImageView Background;
             public Color BackgroundColor;
             public bool BackgroundGradient;
+            public GameObject SelectionBorder;
+            public GameObject SelectionOutline;
+            public GameObject Underline;
+            public bool UnderlineActive;
             public TMP_Text Text;
             public Color TextColor;
         }
@@ -124,12 +128,15 @@ namespace AwayPlayer.UI
             if (button == null) return default;
             var text = button.GetComponentInChildren<TMP_Text>(true);
             var background = button.transform.Find("BG")?.GetComponent<HMUI.ImageView>();
+            var underline = button.transform.Find("Underline")?.gameObject;
             var style = new ButtonStyle
             {
                 Button = button,
                 Background = background,
                 BackgroundColor = background != null ? background.color : Color.white,
                 BackgroundGradient = background != null && background.gradient,
+                Underline = underline,
+                UnderlineActive = underline != null && underline.activeSelf,
                 Text = text,
                 TextColor = text != null ? text.color : Color.white,
             };
@@ -137,7 +144,32 @@ namespace AwayPlayer.UI
             foreach (var animation in button.GetComponentsInChildren<HMUI.ButtonStaticAnimations>(true))
                 animation.enabled = false;
 
+            if (background != null)
+            {
+                var primary = new BeatSaberMarkupLanguage.Tags.PrimaryButtonTag().PrefabButton;
+                style.SelectionBorder = CreateSelectionDecoration(primary.transform.Find("Border"), background.transform);
+                style.SelectionOutline = CreateSelectionDecoration(primary.transform.Find("OutlineWrapper"), background.transform);
+            }
+
             return style;
+        }
+
+        private static GameObject CreateSelectionDecoration(Transform template, Transform parent)
+        {
+            if (template == null) return null;
+
+            var decoration = Object.Instantiate(template.gameObject, parent, false);
+            var rect = (RectTransform)decoration.transform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition3D = Vector3.zero;
+            rect.sizeDelta = Vector2.zero;
+            rect.localScale = Vector3.one;
+            foreach (var image in decoration.GetComponentsInChildren<Image>(true))
+                image.raycastTarget = false;
+            decoration.SetActive(false);
+            return decoration;
         }
 
         private static void SetSelectedStyle(ButtonStyle style, bool selected, string hoverHint)
@@ -149,6 +181,9 @@ namespace AwayPlayer.UI
                 style.Background.color = selected ? SelectedButtonColor : style.BackgroundColor;
                 style.Background.gradient = selected ? false : style.BackgroundGradient;
             }
+            if (style.SelectionBorder != null) style.SelectionBorder.SetActive(selected);
+            if (style.SelectionOutline != null) style.SelectionOutline.SetActive(selected);
+            if (style.Underline != null) style.Underline.SetActive(!selected && style.UnderlineActive);
             if (style.Text != null)
             {
                 style.Text.color = selected && style.Background == null ? SelectedButtonColor : style.TextColor;
